@@ -61,11 +61,7 @@ export default function Authenticated({ header, children }) {
                                     </Dropdown.Trigger>
 
                                     <Dropdown.Content>
-                                        <Dropdown.Link
-                                            href={route('profile.edit')}
-                                        >
-                                            Profile
-                                        </Dropdown.Link>
+                                       zz
                                         <Dropdown.Link
                                             href={route('logout')}
                                             method="post"

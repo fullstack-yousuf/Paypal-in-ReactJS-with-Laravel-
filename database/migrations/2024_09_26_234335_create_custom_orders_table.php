@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('custom_orders', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');//"onDelete('cascade')" if a user is deleted from the users table, any related records in the current table
-            $table->decimal('total_amount', 5, 2)->nullable();// eg amount 54321.12
-            $table->string('status')->default('pending');// 'pending', 'completed'
-            $table->timestamps();
-        });
+            Schema::create('custom_orders', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->constrained()->onDelete('cascade');//"onDelete('cascade')" if a user is deleted from the users table, any related records in the current table
+                $table->decimal('total_amount', 5, 2)->nullable();// eg amount 54321.12
+                $table->string('status')->default('pending');// 'pending', 'completed'
+                $table->timestamps();
+            });
     }
 
     /**

@@ -1,4 +1,11 @@
+
 import React, { useState } from 'react';
+import PayPalButton from '@/Components/PayPalButton';
+import TextInput from '@/Components/TextInput';
+
+
+import { PayPalScriptProvider } from "@paypal/react-paypal-js";
+
 
 
 const PaymentProcess = () => {
@@ -6,6 +13,7 @@ const PaymentProcess = () => {
     const [orderAmount, setOrderAmount] = useState('');
     const [orders, setOrders] = useState([]);
 
+    
     // Generate random amount
     const generateRandomAmount = () => {
         const randomAmount = (Math.random() * (5000 - 1) + 1).toFixed(2);
@@ -25,8 +33,7 @@ const PaymentProcess = () => {
         setStep(3); // Unlock step 3 (Payment Method)
     };
 
-    // Payment Success
-   
+ // Payment Success
     const handlePayment=()=>{
         alert('Payment successful!');
         // Reset the entire process 
@@ -42,7 +49,7 @@ const PaymentProcess = () => {
             {/* <form action="orders" method="post"> */}
                 <div className="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105">
                     <h2 className="text-2xl font-bold mb-4 text-gray-800">Create an Order</h2>
-                    <input
+                    <TextInput
                         type="number"
                         className="border border-gray-300 p-2 w-full rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Enter Amount"
@@ -50,6 +57,14 @@ const PaymentProcess = () => {
                         onChange={(e) => setOrderAmount(e.target.value)}
                         disabled={step > 1} // Disable input once order is confirmed
                     />
+                    {/* <input
+                        type="number"
+                        className="border border-gray-300 p-2 w-full rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter Amount"
+                        value={orderAmount}
+                        onChange={(e) => setOrderAmount(e.target.value)}
+                        disabled={step > 1} // Disable input once order is confirmed
+                    /> */}
                     <div className="flex space-x-4">
                         <button
                             onClick={generateRandomAmount}
@@ -103,12 +118,12 @@ const PaymentProcess = () => {
                     <h2 className="text-2xl font-bold mb-4 text-gray-800">Payment Method</h2>
                     {step >= 3 ? (
                         <>
-                            <p className="text-gray-700 mb-4">Select your payment method:</p>
-                            <button onClick={handlePayment} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg flex items-center justify-center space-x-3 transition-transform transform hover:scale-105" >
-                                <img src="https://www.paypalobjects.com/webstatic/icon/pp258.png" className="w-6 h-6" />
-                                Pay with PayPal
-                            </button>
-                          
+                           
+                           <PayPalScriptProvider options={{ "client-id": "AYolWC1EtQxbXggy-aGU_QQl7VI-3ay8trypcrdAXdUmblMSX_tONcxyvGGuzgbT5a2y_V0SSMo08Pru" }}>
+                               totol amount is {orderAmount} in USD
+                                <PayPalButton amount={orderAmount} />
+                            </PayPalScriptProvider>
+
                         </>
                     ) : (
                         <p className="text-gray-500">Complete the order and checkout to proceed with payment.</p>
@@ -174,4 +189,6 @@ export default PaymentProcess;
 // }
 
 // export default PaymentProcess
+
+
 

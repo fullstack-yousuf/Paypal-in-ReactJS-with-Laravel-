@@ -1,14 +1,254 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+
+use PayPalCheckoutSdk\Core\PayPalHttpClient;
+use PayPalCheckoutSdk\Core\SandboxEnvironment;
+use PayPalCheckoutSdk\Orders\OrdersCreateRequest;
 use Inertia\Inertia;
 use App\Models\MyPayment;
+use App\Models\CustomOrder; 
 use App\Http\Requests\StoreMyPaymentRequest;
 use App\Http\Requests\UpdateMyPaymentRequest;
+use Illuminate\Support\Facades\DB; // Use DB for transaction handling
+
 
 class MyPaymentController extends Controller
 {
+    private $client;
+
+    public function __construct()
+    {
+        $clientId = env('PAYPAL_CLIENT_ID');
+        $clientSecret = env('PAYPAL_CLIENT_SECRET');
+        $environment = new SandboxEnvironment($clientId, $clientSecret);
+        $this->client = new PayPalHttpClient($environment);
+    }
+
+   
+    // Create Order and return PayPal order ID
+    public function createOrder(Request $request)
+    {
+        $orderRequest = new OrdersCreateRequest();
+        $orderRequest->prefer('return=representation');
     
+        // Ensure amount is numeric
+        if (!is_numeric($request->amount)) {
+            return response()->json(['error' => 'Invalid amount'], 400);
+        }
+    
+        $orderRequest->body = [
+            "intent" => "CAPTURE",
+            "purchase_units" => [[
+                "amount" => [
+                    "currency_code" => "USD",
+                    "value" => number_format($request->amount, 2, '.', '') // Format amount correctly
+                ]
+            ]],
+            "application_context" => [
+                "cancel_url" => route('paypal.cancel'),
+                "return_url" => route('paypal.success')
+            ]
+        ];
+    
+        try {
+            $response = $this->client->execute($orderRequest);
+            return response()->json($response->result);
+        } catch (\Exception $ex) {
+            \Log::error('PayPal Create Order Error: ' . $ex->getMessage()); // Log the error
+            return response()->json(['error' => $ex->getMessage()], 500);
+        }
+    }
+    
+    // public function createOrder(Request $request)
+    // {
+    //     $orderRequest = new OrdersCreateRequest();
+    //     $orderRequest->prefer('return=representation');
+    //     $orderRequest->body = [
+    //         "intent" => "CAPTURE",
+    //         "purchase_units" => [[
+    //             "amount" => [
+    //                 "currency_code" => "USD",
+    //                 "value" => $request->amount
+    //             ]
+    //         ]],
+    //         "application_context" => [
+    //             "cancel_url" => route('paypal.cancel'),
+    //             "return_url" => route('paypal.success')
+    //         ]
+    //     ];
+
+    //     try {
+    //         $response = $this->client->execute($orderRequest);
+    //         return response()->json($response->result);
+    //     } catch (\Exception $ex) {
+    //         return response()->json(['error' => $ex->getMessage()], 500);
+    //     }
+    // }
+
+    // Handle successful payment
+    // public function success(Request $request)
+    // {
+    //     DB::beginTransaction(); // Start transaction to handle both order and payment together
+
+    //     try {
+    //         // Step 1: Insert the order details
+    //         $customOrder = new CustomOrder();
+    //         $customOrder->user_id = 1; // Pass user ID from the frontend
+    //         $customOrder->total_amount = $request->total_amount; // Total amount for the order
+    //         $customOrder->status = 'pending'; // Set initial status to pending
+    //         $customOrder->save(); // Insert the order into the database
+
+    //         // Step 2: Capture PayPal Payment
+    //         $orderID = $request->orderID; // PayPal Order ID from frontend
+    //         $captureRequest = new OrdersCaptureRequest($orderID);
+    //         $captureRequest->prefer('return=representation');
+    //         $response = $this->client->execute($captureRequest);
+
+    //         // Step 3: Extract PayPal payment details
+    //         $paymentData = $response->result;
+    //         $transactionId = $paymentData->id;
+    //         $amount = $paymentData->purchase_units[0]->payments->captures[0]->amount->value;
+    //         $paymentStatus = $paymentData->purchase_units[0]->payments->captures[0]->status;
+
+    //         // Step 4: Insert the payment details and link to the custom order
+    //         $payment = new MyPayment();
+    //         $payment->custom_orders_id = $customOrder->id; // Link to the custom order
+    //         $payment->payment_method = 'PayPal';
+    //         $payment->transaction_id = $transactionId;
+    //         $payment->amount = $amount;
+    //         $payment->payment_status = $paymentStatus;
+    //         $payment->payment_data = json_encode($paymentData); // Store full PayPal response
+    //         $payment->save(); // Insert payment into the database
+
+    //         DB::commit(); // Commit transaction
+
+    //         // Return success response
+    //         return response()->json([
+    //             'status' => 'success',
+    //             'order_id' => $customOrder->id,
+    //             'transaction_id' => $transactionId
+    //         ]);
+    //     } catch (\Exception $ex) {
+    //         DB::rollBack(); // Rollback if any error occurs
+    //         \Log::error('Order and Payment Error: ' . $ex->getMessage());
+
+    //         return response()->json([
+    //             'error' => $ex->getMessage()
+    //         ], 500);
+    //     }
+    
+    //     // try {
+    //     //     $orderID = 1;// Check if orderID is received
+    //     //     if (!$orderID) {
+    //     //         throw new \Exception('No Order ID received');
+    //     //     }
+    
+    //     //     // Capture the order details from PayPal
+    //     //     $captureRequest = new OrdersCaptureRequest($orderID);
+    //     //     $captureRequest->prefer('return=representation');
+    //     //     $response = $this->client->execute($captureRequest);
+    
+    //     //     // Log the full response for debugging
+    //     //     \Log::info('PayPal response:', (array) $response->result);
+    
+    //     //     // Process and store payment information
+    //     //     $paymentData = $response->result;
+    //     //     $transactionId = $paymentData->id;
+    //     //     $amount = $paymentData->purchase_units[0]->payments->captures[0]->amount->value;
+    //     //     $paymentStatus = $paymentData->purchase_units[0]->payments->captures[0]->status;
+    
+    //     //     // Check if custom_order_id is passed
+    //     //     if (!$request->has('custom_order_id')) {
+    //     //         throw new \Exception('No Custom Order ID received');
+    //     //     }
+    
+    //     //     // Save to database
+    //     //     $payment = new MyPayment();
+    //     //     $payment->custom_orders_id = $request->custom_order_id;
+    //     //     $payment->payment_method = 'PayPal';
+    //     //     $payment->transaction_id = $transactionId;
+    //     //     $payment->amount = $amount;
+    //     //     $payment->payment_status = $paymentStatus;
+    //     //     $payment->payment_data = json_encode($paymentData);
+    //     //     $payment->save();
+    
+    //     //     return response()->json(['status' => 'success', 'transaction_id' => $transactionId]);
+    
+    //     // } catch (\Exception $ex) {
+    //     //     // Log the error message for debugging
+    //     //     \Log::error('PayPal Success Error: ' . $ex->getMessage());
+    //     //     return response()->json(['error' => $ex->getMessage()], 500);
+    //     // }
+    // }
+    
+    public function success(Request $request)
+{
+    DB::beginTransaction(); // Start transaction to handle both order and payment together
+
+    try {
+        // Step 1: Insert the order details
+        $customOrder = new CustomOrder();
+        $customOrder->user_id = $request->user_id; // Pass user ID from the frontend
+        $customOrder->total_amount = $request->total_amount; // Total amount for the order
+        $customOrder->status = 'pending'; // Set initial status to pending
+        $customOrder->save(); // Insert the order into the database
+
+        // Step 2: Capture PayPal Payment
+        $orderID = $request->orderID; // PayPal Order ID from frontend
+        $captureRequest = new OrdersCaptureRequest($orderID);
+        $captureRequest->prefer('return=representation');
+        $response = $this->client->execute($captureRequest);
+
+        // Log the full response for debugging
+        \Log::info('PayPal capture response:', (array) $response->result);
+
+        // Step 3: Extract PayPal payment details
+        $paymentData = $response->result;
+        $transactionId = $paymentData->id;
+        $amount = $paymentData->purchase_units[0]->payments->captures[0]->amount->value;
+        $paymentStatus = $paymentData->purchase_units[0]->payments->captures[0]->status;
+
+        // Step 4: Insert the payment details and link to the custom order
+        $payment = new MyPayment();
+        $payment->custom_orders_id = $customOrder->id; // Link to the custom order
+        $payment->payment_method = 'PayPal';
+        $payment->transaction_id = $transactionId;
+        $payment->amount = $amount;
+        $payment->payment_status = $paymentStatus;
+        $payment->payment_data = json_encode($paymentData); // Store full PayPal response
+        $payment->save(); // Insert payment into the database
+
+        DB::commit(); // Commit transaction
+
+        // Return success response
+        return response()->json([
+            'status' => 'success',
+            'order_id' => $customOrder->id,
+            'transaction_id' => $transactionId
+        ]);
+    } catch (\Exception $ex) {
+        DB::rollBack(); // Rollback if any error occurs
+        \Log::error('Order and Payment Error: ' . $ex->getMessage() . ' Request: ' . json_encode($request->all()));
+
+        return response()->json([
+            'error' => $ex->getMessage()
+        ], 500);
+    }
+}
+
+
+
+    // Handle canceled payment
+    public function cancel()
+    {
+        return response()->json(['status' => 'cancel']);
+    }
+
+
+
     public function index()
     {
     Return Inertia::render('Order_And_Payment/PaymentProcess');
@@ -17,24 +257,7 @@ class MyPaymentController extends Controller
     
     public function create()
     {
-        // $order = Order::findOrFail($request->custom_order_id);
-
-        // if(!$order){
-        //     return response()->json(['error message' => 'Order not found'], 404);//automatic way to handle API responses
-        // }
-
-        // $payment = Payment::create([
-        //     'custom_order_id' => $custom_order->id,
-        //     'payment_method' => $request->payment_method,
-        //     'payment_status' => 'success', // Assuming success for simplicity
-        //     'transaction_id' => 'TXN123456', // From the payment gateway
-        //     'amount' => $request->amount,
-        //     'payment_data' => json_encode(['gateway_response' => 'Sample Response']),
-        // ]);
-
-        // $order->update(['status' => 'completed']);
-
-        // return response()->json($payment, 201);
+    
     }
 
     
