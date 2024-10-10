@@ -21,6 +21,41 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## Setup Instructions
+
+To access the payment process, follow these steps:
+
+1. **Delete Existing Files**:
+   - Remove the `vendor` directory.
+   - Remove the `node_modules` directory.
+   - Delete `package-lock.json` and `composer.lock`.
+
+2. **Install Dependencies**:
+   - Run the following command to install Node.js dependencies:
+     ```bash
+     npm install
+     ```
+   - Then, install PHP dependencies using Composer:
+     ```bash
+     composer install
+     ```
+
+3. **Run the Application**:
+   - Start the Laravel server:
+     ```bash
+     php artisan serve
+     ```
+   - For Node.js, run:
+     ```bash
+     npm run dev
+     ```
+
+4. **Access the Payment Process**:
+   - Open your browser and navigate to: 
+     ```
+     http://127.0.0.1:8000/order%20and%20payment
+     ```
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
