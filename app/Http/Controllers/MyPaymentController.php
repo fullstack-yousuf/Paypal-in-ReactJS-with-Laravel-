@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use PayPalCheckoutSdk\Core\PayPalHttpClient;
 use PayPalCheckoutSdk\Core\SandboxEnvironment;
 use PayPalCheckoutSdk\Orders\OrdersCreateRequest;
+use PayPalCheckoutSdk\Orders\OrdersCaptureRequest;
 use Inertia\Inertia;
 use App\Models\MyPayment;
 use App\Models\CustomOrder; 
@@ -21,8 +22,8 @@ class MyPaymentController extends Controller
 
     public function __construct()
     {
-        $clientId = env('PAYPAL_CLIENT_ID');
-        $clientSecret = env('PAYPAL_CLIENT_SECRET');
+        $clientId ='AYolWC1EtQxbXggy-aGU_QQl7VI-3ay8trypcrdAXdUmblMSX_tONcxyvGGuzgbT5a2y_V0SSMo08Pru';
+        $clientSecret = 'EF-clsrBXgEN0icRzV8zPAyOjlcQeX3ZSdScBN2Od1cgSvPqTcAY1rDs8edU9Kb0gXFKKSAxQtxIoj7A';
         $environment = new SandboxEnvironment($clientId, $clientSecret);
         $this->client = new PayPalHttpClient($environment);
     }
@@ -217,7 +218,7 @@ class MyPaymentController extends Controller
         $payment->payment_method = 'PayPal';
         $payment->transaction_id = $transactionId;
         $payment->amount = $amount;
-        $payment->payment_status = $paymentStatus;
+        $payment->amopayment_status = $paymentStatus;
         $payment->payment_data = json_encode($paymentData); // Store full PayPal response
         $payment->save(); // Insert payment into the database
 

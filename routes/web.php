@@ -23,6 +23,12 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+    Route::post('/paypal/capture', [MyPaymentController::class, 'captureOrder']);
+    
+    Route::post('paypal/create-order', [PaypalController::class, 'createOrder']);
+    Route::post('/paypal/success', [MyPaymentController::class, 'success'])->name('paypal.success');
+    Route::get('/paypal/cancel', [MyPaymentController::class, 'cancel'])->name('paypal.cancel');
+
     Route::get('/order and payment', [MyPaymentController::class, 'index']);
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

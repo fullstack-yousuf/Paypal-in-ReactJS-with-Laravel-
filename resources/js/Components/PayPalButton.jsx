@@ -8,16 +8,28 @@ const PayPalButton = ({ amount }) => {
     const [error, setError] = useState(null);
 
     // Create an order on server-side
-    const createOrder = async () => {
-        try {
-            const response = await axios.post("/paypal/create-order", { amount });
-            setOrderID(response.data.id); // set the PayPal order ID
-            return response.data.id;
-        } catch (error) {
-            setError(error.message);
-            console.error('Create Order Error:', error); // Log error for debugging
-        }
-    };
+// Create an order on server-side using fetch
+const createOrder = async () => {
+    try {
+        const response = await fetch('/paypal/create-order', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ amount })
+        });
+        
+        const data = await response.json();
+        setOrderID(data.id);
+        return data.id;
+    } catch (error) {
+        setError(error.message);
+        console.error('Create Order Error:', error);
+    }
+};
+
+
     
 
     // Capture the order
@@ -25,7 +37,6 @@ const PayPalButton = ({ amount }) => {
         try {
             const userId = 1; // Pass the user ID dynamically
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content'); // Get CSRF token
-        
             const response = await fetch('/paypal/success', {
                 method: 'POST',
                 headers: {
