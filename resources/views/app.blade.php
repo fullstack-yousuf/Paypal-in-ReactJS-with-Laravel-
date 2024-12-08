@@ -11,7 +11,7 @@
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-        <script src="https://sandbox.paypal.com/sdk/js?client-id=AYolWC1EtQxbXggy-aGU_QQl7VI-3ay8trypcrdAXdUmblMSX_tONcxyvGGuzgbT5a2y_V0SSMo08Pru"></script>
+        <script src="https://sandbox.paypal.com/sdk/js?client-id="></script>
         <!-- Scripts -->
         @routes
         @viteReactRefresh
